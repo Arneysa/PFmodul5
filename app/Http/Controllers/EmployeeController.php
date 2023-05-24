@@ -14,12 +14,6 @@ class EmployeeController extends Controller
     public function index()
     {
         $pageTitle = 'Employee List';
-          // RAW SQL QUERY
-        // $employees = DB::select('
-        // select *, employees.id as employee_id, positions.name as position_name
-        // from employees
-        // left join positions on employees.position_id = positions.id
-        // ');
 
         $employees = DB::table('employees')
         ->leftJoin('positions', 'employees.position_id', '=', 'positions.id')
@@ -38,12 +32,12 @@ class EmployeeController extends Controller
     public function create()
     {
         $pageTitle = 'Create Employee';
-        // RAW SQL Query
-        // $positions = DB::select('select * from positions');
+
         $positions = DB::table('positions')->get();
 
         return view('employee.create', compact('pageTitle', 'positions'));
     }
+
 
     /**
      * Store a newly created resource in storage.
@@ -81,20 +75,13 @@ class EmployeeController extends Controller
         return redirect()->route('employees.index');
     }
 
+
     /**
      * Display the specified resource.
      */
     public function show(string $id)
     {
         $pageTitle = 'Employee Detail';
-
-        // RAW SQL QUERY
-        // $employee = collect(DB::select('
-        //     select *, employees.id as employee_id, positions.name as position_name
-        //     from employees
-        //     left join positions on employees.position_id = positions.id
-        //     where employees.id = ?
-        // ', [$id]))->first();
 
         $employee = DB::table('employees')
         ->leftJoin('positions', 'employees.position_id', '=', 'positions.id')
@@ -111,8 +98,9 @@ class EmployeeController extends Controller
     public function edit(string $id)
     {
         $pageTitle = 'Employee Edit';
-        // $positions = DB::select('select * from positions');
+
         $positions = DB::table('positions')->get();
+
         $user = DB::table('employees')
         ->where('id', $id)
         ->first();
@@ -131,6 +119,24 @@ class EmployeeController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $messages = [
+            'required' => ':Attribute harus diisi.',
+            'email' => 'Isi :attribute dengan format yang benar',
+            'numeric' => 'Isi :attribute dengan angka'
+        ];
+
+        $validator = \Validator::make($request->all(), [
+            'firstName' => 'required',
+            'lastName' => 'required',
+            'email' => 'required|email',
+            'age' => 'required|numeric',
+        ], $messages);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+
+        }
+
         $user = DB::table('employees')
         ->where('id', $id)
         ->update([
@@ -139,7 +145,6 @@ class EmployeeController extends Controller
             'email' => $request->input('email'),
             'age' => $request->input('age'),
             'position_id' => $request->input('position'),
-            // Tambahkan kolom lain sesuai kebutuhan
         ]);
 
         return redirect()->route('employees.index');
